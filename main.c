@@ -12,20 +12,41 @@
 
 #include "filler.h"
 
-int		main(void)
+t_player	*makeready(t_player *game)
+{
+	game->ypiece = 0;
+	game->xpiece = 0;
+	game->xppos = 0;
+	game->yppos = 0;
+	game->starcount = 0;
+	game->x = 0;
+	game->y = 0;
+	game->onme = 0;
+	game->sum = 0;
+	game->countsum = 0;
+	game->places = 0;
+	game->xend = 0;
+	game->yend = 0;
+	return (game);
+}
+
+int			main(void)
 {
 	t_player	*game;
+	int			fd;
 
-	game = (t_player *)malloc(sizeof(*game));
+	fd = 0;
+	game = ft_memalloc(sizeof(t_player));
+	game->fd = fd;
 	get_player(game);
-	ft_printf("\n\n\n-----------------------\nYou play as: %c\n", game->sign);
 	get_plateau(game);
-	ft_printf("Plateau size y: %d\n", game->yplat);
-	ft_printf("Plateau size x: %d\n\n", game->xplat);
 	while (1)
 	{
+		makeready(game);
 		if (read_map(game) == 1)
+		{
 			return (0);
+		}
 	}
 	return (0);
 }

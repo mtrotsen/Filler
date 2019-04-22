@@ -12,6 +12,51 @@
 
 #include "filler.h"
 
+char		*ft_strdupfill(const char *s, int size)
+{
+	int		i;
+	char	*dup;
+
+	i = 0;
+	dup = (char *)malloc(sizeof(char) * (size + 1));
+	if (dup == NULL)
+		return (0);
+	while (i < size)
+	{
+		dup[i] = s[i];
+		i++;
+	}
+	dup[i] = '\0';
+	return (dup);
+}
+
+t_player	*piecepos(t_player *game)
+{
+	int		x;
+	int		y;
+
+	x = 0;
+	y = 0;
+	while (y < game->ypiece || x < game->xpiece)
+	{
+		if (game->piece[y][x] == '\0' && (y + 1) < game->ypiece)
+		{
+			y++;
+			x = 0;
+		}
+		if (game->piece[y][x] == '*')
+		{
+			game->yppos = y;
+			break ;
+		}
+		x++;
+		if (game->piece[y][x] == '\0' && (y + 1) >= game->ypiece)
+			break ;
+	}
+	ft_trymake(game);
+	return (game);
+}
+
 t_player	*ft_game_piece(t_player *game)
 {
 	char	*line;
@@ -19,15 +64,13 @@ t_player	*ft_game_piece(t_player *game)
 
 	i = 0;
 	game->piece = malloc(sizeof(char *) * game->ypiece);
-	while (i < game->ypiece)
-		game->piece[i++] = malloc(sizeof(char) * (game->xpiece + 1));
 	i = 0;
-	ft_printf("\nPiece:\n");
-	while ((get_next_line(0, &line)) > 0 && (line[0] == '.' || line[0] == '*'))
+	while (i < game->ypiece)
 	{
-		game->piece[i] = ft_strcpy(game->piece[i], line);
-		printf("%s\n", game->piece[i]);
+		get_next_line(game->fd, &line);
+		game->piece[i] = ft_strdupfill(line, game->xpiece);
 		i++;
+		free(line);
 	}
 	return (game);
 }
@@ -40,42 +83,28 @@ t_player	*ft_piece_get(char *line, t_player *game)
 	int		p;
 	int		f;
 
-	p = 0;
-	i = 0;
+	ZR(p, i);
 	while (line[i] != ':' && line[i] != '\0')
 	{
-		j = 0;
-		f = 0;
+		ZR(j, f);
 		while (line[i] >= '0' && line[i] <= '9')
-		{
-			i++;
-			j++;
-		}
+			JI(i, j);
 		if (j > 0)
 		{
 			cpy = ft_strnew(j);
 			i = i - j;
 			while (line[i] >= '0' && line[i] <= '9')
-			{
-				cpy[f] = line[i];
-				f++;
-				i++;
-			}
-			if (p == 0)
-				game->ypiece = ft_atoi(cpy);
-			else if (p > 0)
-				game->xpiece = ft_atoi(cpy);
-			free(cpy);
-			p++;
+				CLIF(cpy, line, i, f);
+			P(p, game->ypiece, game->xpiece, cpy);
+			FEE(cpy, p);
 		}
 		i++;
 	}
-	ft_game_piece(game);
-	place_piece(game);
+	GAME(game);
 	return (game);
 }
 
-int		read_map(t_player *game)
+int			read_map(t_player *game)
 {
 	char	*line;
 	int		i;
@@ -85,22 +114,21 @@ int		read_map(t_player *game)
 	while (i < game->yplat)
 		game->map[i++] = malloc(sizeof(char) * (game->xplat + 1));
 	i = 0;
-	get_next_line(0, &line);
-	ft_printf("Plateau:\n");
-	while ((get_next_line(0, &line)) > 0 && (ft_chrlook(line, "Piece")) != 1)
+	while ((get_next_line(game->fd, &line)) > 0 && \
+		(ft_chrlook(line, "Piece")) != 1)
 	{
 		game->map[i] = ft_strcpy(game->map[i], &line[4]);
-		printf("%s\n", game->map[i]);
-		i++;
+		HERE(i, line);
 	}
 	ft_piece_get(line, game);
-	ft_printf("\nPiece y coordinates = %d\n", game->ypiece);
-	ft_printf("Piece x coordinates = %d\n\n\n\n", game->xpiece);
-	while (line[0] != '<' && line[6] != 'X' && line[0] != '=')
-		get_next_line(0, &line);
-	get_next_line(0, &line);
-	printf("Line = %s\n\n", line);
-	if (line[0] == '=')
+	free(line);
+	ft_freeup(game->piece, game->ypiece);
+	ft_freeup(game->map, game->yplat);
+	ft_freeint(game->heatmap, game->yplat);
+	if (get_next_line(game->fd, &line) == 0)
 		return (1);
+	free(line);
+	get_next_line(game->fd, &line);
+	free(line);
 	return (0);
 }

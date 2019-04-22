@@ -15,9 +15,15 @@
 t_player	*ft_playsign(char *line, t_player *game)
 {
 	if (line[10] == '1')
+	{
 		game->sign = 'O';
+		game->oposite = 'X';
+	}
 	else if (line[10] == '2')
+	{
 		game->sign = 'X';
+		game->oposite = 'O';
+	}
 	return (game);
 }
 
@@ -46,16 +52,18 @@ t_player	*get_player(t_player *game)
 {
 	char	*line;
 
-	while ((get_next_line(0, &line)) > 0)
+	while ((get_next_line(game->fd, &line)) > 0)
 	{
 		if (line[0] == '$')
 		{
 			if ((ft_chrlook(line, "mtrotsen.filler")) == 1)
 			{
 				ft_playsign(line, game);
+				free(line);
 				return (game);
 			}
 		}
+		free(line);
 	}
 	return (game);
 }
@@ -68,33 +76,20 @@ t_player	*find_plat(char *line, t_player *game)
 	int		p;
 	int		f;
 
-	p = 0;
-	i = 0;
+	ZR(p, i);
 	while (line[i] != ':' && line[i] != '\0')
 	{
-		j = 0;
-		f = 0;
+		ZR(f, j);
 		while (line[i] >= '0' && line[i] <= '9')
-		{
-			i++;
-			j++;
-		}
+			JI(i, j);
 		if (j > 0)
 		{
 			cpy = ft_strnew(j);
 			i = i - j;
 			while (line[i] >= '0' && line[i] <= '9')
-			{
-				cpy[f] = line[i];
-				f++;
-				i++;
-			}
-			if (p == 0)
-				game->yplat = ft_atoi(cpy);
-			else if (p > 0)
-				game->xplat = ft_atoi(cpy);
-			free(cpy);
-			p++;
+				CLIF(cpy, line, i, f);
+			P(p, game->yplat, game->xplat, cpy);
+			FEE(cpy, p);
 		}
 		i++;
 	}
@@ -105,13 +100,17 @@ t_player	*get_plateau(t_player *game)
 {
 	char	*line;
 
-	while ((get_next_line(0, &line)) > 0)
+	while ((get_next_line(game->fd, &line)) > 0)
 	{
 		if ((ft_chrlook(line, "Plateau")) == 1)
 		{
 			find_plat(line, game);
+			free(line);
+			get_next_line(game->fd, &line);
+			free(line);
 			return (game);
 		}
+		free(line);
 	}
 	return (game);
 }
